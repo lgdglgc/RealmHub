@@ -8,9 +8,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
+      --bg-color: #0b1120;
+      --panel-bg: #1e293b;
+      --card-bg: #172033;
+      --border-color: #334155;
+      --active-border: #3b82f6;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --primary-color: #3b82f6;
@@ -23,89 +25,112 @@
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       min-height: 100vh;
+      overflow-x: hidden;
     }
     .navbar {
-      background-color: var(--card-bg) !important;
-      border-bottom: 1px solid var(--card-border);
+      background-color: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
     }
-    .card {
+    .panel-box {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      min-height: calc(100vh - 100px);
+    }
+    .agent-item {
       background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
+      border: 1px solid var(--border-color);
       border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
-    .table {
-      --bs-table-bg: transparent;
-      --bs-table-color: var(--text-main);
-      --bs-table-border-color: var(--card-border);
+    .agent-item:hover {
+      border-color: #64748b;
+      transform: translateY(-1px);
+    }
+    .agent-item.active {
+      border-color: var(--active-border);
+      background-color: #1e3a5f;
+      box-shadow: 0 0 0 1px var(--active-border);
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-dot.online {
+      background-color: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .status-dot.offline {
+      background-color: #64748b;
+    }
+    .code-box {
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-family: Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.88rem;
+      color: #38bdf8;
+      word-break: break-all;
+      white-space: pre-wrap;
     }
     .modal-content {
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
       color: var(--text-main);
     }
     .form-control, .form-select {
-      background-color: #0f172a;
-      border: 1px solid var(--card-border);
+      background-color: #0b1120;
+      border: 1px solid var(--border-color);
       color: var(--text-main);
     }
     .form-control:focus, .form-select:focus {
-      background-color: #0f172a;
+      background-color: #0b1120;
       border-color: var(--primary-color);
       color: var(--text-main);
       box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
     }
-    .badge-online { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #059669; }
-    .badge-offline { background-color: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid #475569; }
+    .table {
+      --bs-table-bg: transparent;
+      --bs-table-color: var(--text-main);
+      --bs-table-border-color: var(--border-color);
+    }
     .badge-realm { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #2563eb; }
     .badge-kernel { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #d97706; }
-    .code-box {
-      background: #090d16;
-      border: 1px solid var(--card-border);
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 0.88rem;
-      color: #38bdf8;
-      word-break: break-all;
-    }
-    .nav-tabs .nav-link {
-      color: var(--text-muted);
-      border: none;
-      padding: 10px 20px;
-    }
-    .nav-tabs .nav-link.active {
-      color: var(--primary-color);
-      background-color: transparent;
-      border-bottom: 2px solid var(--primary-color);
-    }
   </style>
 </head>
 <body>
 
   <!-- 顶部导航 -->
-  <nav class="navbar navbar-expand-lg px-4 mb-4">
+  <nav class="navbar navbar-expand-lg px-4 py-2">
     <div class="container-fluid">
       <a class="navbar-brand text-light fw-bold d-flex align-items-center gap-2" href="#">
-        <i class="bi bi-diagram-3-fill text-primary"></i>
-        RealmHub <span class="badge bg-primary fs-6 fw-normal">v1.0</span>
+        <i class="bi bi-diagram-3-fill text-primary fs-4"></i>
+        <span>RealmHub</span>
+        <span class="badge bg-primary fs-6 fw-normal">v1.0</span>
       </a>
       <div class="d-flex align-items-center gap-3">
+        <span id="globalStats" class="text-secondary small d-none">在线: <b id="statOnline" class="text-success">0</b> / 总计: <b id="statTotal">0</b></span>
         <span id="userStatus" class="text-secondary small">未登录</span>
         <button id="logoutBtn" class="btn btn-outline-danger btn-sm d-none" onclick="logout()">退出登录</button>
       </div>
     </div>
   </nav>
 
-  <!-- 主容器 -->
-  <div class="container py-2" id="app">
-    
-    <!-- 登录 / 初始化卡片 (未登录时显示) -->
-    <div id="authSection" class="row justify-content-center d-none" style="margin-top: 80px;">
-      <div class="col-md-5">
-        <div class="card p-4 shadow-lg">
-          <h4 class="text-center fw-bold mb-3" id="authTitle">管理员登录</h4>
-          <p class="text-secondary text-center small mb-4" id="authSubtitle">请输入凭据以访问控制台</p>
+  <!-- 主工作区 -->
+  <div class="container-fluid px-4 py-3" id="app">
+
+    <!-- 登录 / 初始化界面 -->
+    <div id="authSection" class="row justify-content-center d-none" style="margin-top: 100px;">
+      <div class="col-md-4">
+        <div class="card panel-box p-4 shadow-lg">
+          <h4 class="text-center fw-bold mb-2" id="authTitle">管理员登录</h4>
+          <p class="text-secondary text-center small mb-4" id="authSubtitle">请输入凭据进入管理面板</p>
           <form onsubmit="handleAuthSubmit(event)">
             <div class="mb-3">
               <label class="form-label text-secondary small">用户名</label>
@@ -121,110 +146,112 @@
       </div>
     </div>
 
-    <!-- 仪表盘主界面 (登录后显示) -->
-    <div id="mainSection" class="d-none">
-      
-      <!-- 统计卡片 -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-4">
-          <div class="card p-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <div class="text-secondary small">受控节点</div>
-                <h3 class="fw-bold mb-0 mt-1" id="statNodes">0</h3>
-              </div>
-              <i class="bi bi-hdd-network fs-1 text-primary"></i>
-            </div>
+    <!-- 左侧列表 + 右侧详情 双栏布局 -->
+    <div id="mainSection" class="row g-3 d-none">
+
+      <!-- 左栏：Agent 节点列表 (左侧) -->
+      <div class="col-lg-3 col-md-4">
+        <div class="panel-box p-3 d-flex flex-column" style="height: calc(100vh - 90px);">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-hdd-network"></i> Agent 列表
+            </h6>
+            <button class="btn btn-primary btn-sm px-2 py-1" onclick="openAddNodeModal()">
+              <i class="bi bi-plus"></i> 添加
+            </button>
           </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card p-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <div class="text-secondary small">在线节点</div>
-                <h3 class="fw-bold mb-0 mt-1 text-success" id="statOnlineNodes">0</h3>
-              </div>
-              <i class="bi bi-activity fs-1 text-success"></i>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card p-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <div class="text-secondary small">活动转发规则</div>
-                <h3 class="fw-bold mb-0 mt-1 text-warning" id="statRules">0</h3>
-              </div>
-              <i class="bi bi-arrow-left-right fs-1 text-warning"></i>
+
+          <!-- 节点滚动容器 -->
+          <div class="flex-grow-1 overflow-auto pe-1" id="agentListContainer">
+            <div class="text-center text-secondary py-5">
+              <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+              <div>正在加载 Agent...</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 选项卡切换 -->
-      <ul class="nav nav-tabs mb-3" id="mainTabs">
-        <li class="nav-item">
-          <button class="nav-link active" onclick="switchTab('nodes')"><i class="bi bi-hdd-rack me-1"></i> 节点管理</button>
-        </li>
-        <li class="nav-item">
-          <button class="nav-link" onclick="switchTab('rules')"><i class="bi bi-signpost-split me-1"></i> 转发规则</button>
-        </li>
-      </ul>
-
-      <!-- 节点管理视图 -->
-      <div id="nodesTab">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0">节点列表</h5>
-          <button class="btn btn-primary btn-sm" onclick="openAddNodeModal()"><i class="bi bi-plus-lg me-1"></i> 添加节点</button>
-        </div>
-
-        <div class="card p-3">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead>
-                <tr class="text-secondary small">
-                  <th>节点名称</th>
-                  <th>状态</th>
-                  <th>IP / 架构</th>
-                  <th>负载 (CPU / 内存)</th>
-                  <th>最后活跃</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="nodesTableBody">
-                <tr><td colspan="6" class="text-center text-secondary py-4">正在载入数据...</td></tr>
-              </tbody>
-            </table>
+      <!-- 右栏：选定节点的详细信息与转发端口 (右侧) -->
+      <div class="col-lg-9 col-md-8">
+        <div class="panel-box p-4 d-flex flex-column" id="rightPanel" style="height: calc(100vh - 90px); overflow-y: auto;">
+          <!-- 默认未选择状态 -->
+          <div id="noAgentSelectedView" class="m-auto text-center py-5 text-secondary">
+            <i class="bi bi-hdd-rack fs-1 d-block mb-3 text-secondary opacity-50"></i>
+            <h5>请从左侧选择一个 Agent 节点</h5>
+            <p class="small">或点击左侧 “+ 添加” 按钮接入新的受控中继服务器</p>
           </div>
-        </div>
-      </div>
 
-      <!-- 转发规则视图 -->
-      <div id="rulesTab" class="d-none">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0">规则列表</h5>
-          <button class="btn btn-primary btn-sm" onclick="openAddRuleModal()"><i class="bi bi-plus-lg me-1"></i> 新增规则</button>
-        </div>
+          <!-- 选定节点内容区 -->
+          <div id="activeAgentView" class="d-none">
 
-        <div class="card p-3">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead>
-                <tr class="text-secondary small">
-                  <th>规则名称</th>
-                  <th>所属节点</th>
-                  <th>模式</th>
-                  <th>协议</th>
-                  <th>本地监听</th>
-                  <th>目标地址</th>
-                  <th>状态</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="rulesTableBody">
-                <tr><td colspan="8" class="text-center text-secondary py-4">暂无转发规则</td></tr>
-              </tbody>
-            </table>
+            <!-- 场景 1: Agent 处于离线状态 (展示大图标与专属连接命令) -->
+            <div id="agentOfflineView" class="text-center py-4 d-none">
+              <div class="mb-3">
+                <i class="bi bi-robot fs-1 text-secondary opacity-75"></i>
+              </div>
+              <h3 class="fw-bold mb-1" id="offlineAgentName">Agent</h3>
+              <div class="text-danger fw-semibold small mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> Agent 离线 · 请启动 Agent 连接到管理服务器
+              </div>
+
+              <div class="text-start mx-auto" style="max-width: 680px;">
+                <label class="form-label text-secondary small fw-bold">连接命令：</label>
+                <div class="code-box mb-3" id="agentConnectCmd">...</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-secondary">注意：此命令包含节点密钥，直接在目标服务器粘贴运行即可。</small>
+                  <button class="btn btn-primary btn-sm px-3" onclick="copyConnectCmd()">
+                    <i class="bi bi-clipboard me-1"></i> 复制连接命令
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 场景 2: Agent 处于在线状态 (展示节点健康度与转发规则列表) -->
+            <div id="agentOnlineView" class="d-none">
+              <!-- 顶部状态栏 -->
+              <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-secondary border-opacity-25">
+                <div>
+                  <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                    <span id="onlineAgentName">Agent</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 fw-normal">
+                      ● 在线
+                    </span>
+                  </h4>
+                  <div class="text-secondary small d-flex gap-3 mt-1">
+                    <span>IP: <b id="agentIP" class="text-light">127.0.0.1</b></span>
+                    <span>系统: <span id="agentOS" class="text-light">Linux/amd64</span></span>
+                    <span>负载: CPU <b id="agentCPU" class="text-info">0%</b> | 内存 <b id="agentMem" class="text-info">0%</b></span>
+                  </div>
+                </div>
+                <div>
+                  <button class="btn btn-primary btn-sm px-3" onclick="openAddRuleModal()">
+                    <i class="bi bi-plus-lg me-1"></i> 添加转发规则
+                  </button>
+                </div>
+              </div>
+
+              <!-- 规则列表 -->
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr class="text-secondary small">
+                      <th>规则名称</th>
+                      <th>转发模式</th>
+                      <th>协议</th>
+                      <th>本地监听端口</th>
+                      <th>目标后端地址</th>
+                      <th>运行状态</th>
+                      <th class="text-end">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="agentRulesTableBody">
+                    <tr><td colspan="7" class="text-center text-secondary py-5">当前节点暂无转发规则，请点击右上角添加</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
           </div>
         </div>
       </div>
@@ -236,22 +263,18 @@
   <div class="modal fade" id="addNodeModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header border-bottom-0">
-          <h5 class="modal-title fw-bold">添加新受控节点</h5>
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">添加新 Agent 节点</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div id="addNodeFormView">
-            <div class="mb-3">
-              <label class="form-label text-secondary small">节点标识名称</label>
-              <input type="text" id="newNodeName" class="form-control" placeholder="例如: 香港-01 或 转发网关">
-            </div>
-            <button class="btn btn-primary w-100" onclick="submitAddNode()">生成连接指令</button>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">节点名称 / 备注</label>
+            <input type="text" id="newNodeName" class="form-control" placeholder="例如: DMIT1、香港HK-01 或 入口中继">
           </div>
-          <div id="addNodeResultView" class="d-none">
-            <p class="text-success small fw-semibold"><i class="bi bi-check-circle-fill me-1"></i> 节点创建成功！请在目标服务器上以 root 执行下方命令：</p>
-            <div class="code-box mb-3" id="installCmdText">...</div>
-            <button class="btn btn-outline-info btn-sm w-100" onclick="copyInstallCmd()">复制命令</button>
+          <div class="modal-footer border-top-0 px-0 pb-0">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="submitAddNode()">立即创建</button>
           </div>
         </div>
       </div>
@@ -262,8 +285,8 @@
   <div class="modal fade" id="ruleModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
-        <div class="modal-header border-bottom-0">
-          <h5 class="modal-title fw-bold" id="ruleModalTitle">新增转发规则</h5>
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold" id="ruleModalTitle">添加转发规则</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -271,21 +294,8 @@
             <input type="hidden" id="ruleId">
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label text-secondary small">规则备注</label>
-                <input type="text" id="ruleName" class="form-control" required placeholder="如: 游戏联机 / 网站中继">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label text-secondary small">目标受控节点</label>
-                <select id="ruleNodeId" class="form-select" required></select>
-              </div>
-
-              <!-- 模式选择 -->
-              <div class="col-md-6">
-                <label class="form-label text-secondary small">转发工作模式</label>
-                <select id="ruleMode" class="form-select" onchange="handleModeChange()">
-                  <option value="realm">⚡ 原生 Realm 模式 (常规单端口/多端口/高性能代理)</option>
-                  <option value="kernel">🔥 内核级 iptables/nftables (大端口段 20000-50000 整段转发)</option>
-                </select>
+                <label class="form-label text-secondary small">规则备注名称</label>
+                <input type="text" id="ruleName" class="form-control" required placeholder="例如: MC游戏联机 / 网站反代">
               </div>
 
               <div class="col-md-6">
@@ -297,29 +307,37 @@
                 </select>
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label text-secondary small" id="listenLabel">本地监听端口</label>
-                <input type="text" id="ruleListenPort" class="form-control" required placeholder="如: 8080 或 20000-50000">
-                <div class="form-text text-secondary small" id="listenHelp">单端口示例: 8080；端口段示例: 20000-50000</div>
+              <!-- 模式选择 -->
+              <div class="col-12">
+                <label class="form-label text-secondary small">转发引擎工作模式</label>
+                <select id="ruleMode" class="form-select" onchange="handleModeChange()">
+                  <option value="realm">⚡ 原生 Realm 模式 (常规单端口/高性能代理/动态DNS)</option>
+                  <option value="kernel">🔥 内核级 iptables/nftables (大端口段 20000-50000 整段转发，后端随意开服前端免动)</option>
+                </select>
               </div>
 
               <div class="col-md-6">
-                <label class="form-label text-secondary small" id="remoteLabel">目标地址 (IP:Port)</label>
-                <input type="text" id="ruleRemoteAddr" class="form-control" required placeholder="如: 1.2.3.4:8080 或 1.2.3.4:20000-50000">
-                <div class="form-text text-secondary small" id="remoteHelp">后端目标机器的公网/内网地址</div>
+                <label class="form-label text-secondary small" id="listenLabel">本地监听端口</label>
+                <input type="text" id="ruleListenPort" class="form-control" required placeholder="例如: 8080 或 20000-50000">
+                <div class="form-text text-secondary small" id="listenHelp">单端口示例: 8080</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-secondary small" id="remoteLabel">目标后端地址 (IP:Port)</label>
+                <input type="text" id="ruleRemoteAddr" class="form-control" required placeholder="例如: 1.2.3.4:8080 或 1.2.3.4:20000-50000">
+                <div class="form-text text-secondary small" id="remoteHelp">目标后端服务地址</div>
               </div>
 
               <div class="col-12" id="modeTipAlert">
                 <div class="alert alert-info py-2 small mb-0">
-                  <i class="bi bi-info-circle me-1"></i> <strong>提示</strong>：在内核模式下，支持单次映射数万个端口（如 20000-50000），由 Agent 直接在 Linux 内核层下发 DNAT 规则，零额外内存开销，后端更改配置前端完全免动！
+                  <i class="bi bi-info-circle me-1"></i> <strong>提示</strong>：在内核模式下，支持映射整段端口（如 20000-50000），由 Agent 自动在 Linux 内核注入 DNAT 规则，零额外内存开销，跑满网卡线速！
                 </div>
               </div>
-
             </div>
 
             <div class="modal-footer border-top-0 px-0 pb-0 mt-4">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-              <button type="submit" class="btn btn-primary">保存并同步至节点</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+              <button type="submit" class="btn btn-primary btn-sm">保存并下发生效</button>
             </div>
           </form>
         </div>
@@ -332,8 +350,9 @@
     let token = localStorage.getItem('realm_token') || '';
     let nodesList = [];
     let rulesList = [];
+    let activeNodeId = localStorage.getItem('realm_active_node_id') || '';
 
-    // 初始化检查认证
+    // 认证状态检查
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/me', {
@@ -354,6 +373,7 @@
       document.getElementById('authSection').classList.remove('d-none');
       document.getElementById('mainSection').classList.add('d-none');
       document.getElementById('logoutBtn').classList.add('d-none');
+      document.getElementById('globalStats').classList.add('d-none');
       document.getElementById('userStatus').textContent = '未登录';
 
       if (needSetup) {
@@ -362,7 +382,7 @@
         document.getElementById('authSubmitBtn').textContent = '完成初始化并进入';
       } else {
         document.getElementById('authTitle').textContent = '管理员登录';
-        document.getElementById('authSubtitle').textContent = '请输入凭证以访问控制台';
+        document.getElementById('authSubtitle').textContent = '请输入凭证进入管理面板';
         document.getElementById('authSubmitBtn').textContent = '登 录';
       }
     }
@@ -371,6 +391,7 @@
       document.getElementById('authSection').classList.add('d-none');
       document.getElementById('mainSection').classList.remove('d-none');
       document.getElementById('logoutBtn').classList.remove('d-none');
+      document.getElementById('globalStats').classList.remove('d-none');
       document.getElementById('userStatus').textContent = `已登录: ${username}`;
       loadData();
     }
@@ -401,19 +422,6 @@
       checkAuth();
     }
 
-    function switchTab(tab) {
-      document.querySelectorAll('#mainTabs .nav-link').forEach(l => l.classList.remove('active'));
-      if (tab === 'nodes') {
-        document.querySelector('#mainTabs .nav-link:nth-child(1)').classList.add('active');
-        document.getElementById('nodesTab').classList.remove('d-none');
-        document.getElementById('rulesTab').classList.add('d-none');
-      } else {
-        document.querySelector('#mainTabs .nav-link:nth-child(2)').classList.add('active');
-        document.getElementById('nodesTab').classList.add('d-none');
-        document.getElementById('rulesTab').classList.remove('d-none');
-      }
-    }
-
     async function loadData() {
       try {
         const [nodesRes, rulesRes] = await Promise.all([
@@ -422,89 +430,165 @@
         ]);
         nodesList = await nodesRes.json();
         rulesList = await rulesRes.json();
-        renderDashboard();
+
+        // 默认激活第一个节点
+        if (nodesList.length > 0 && (!activeNodeId || !nodesList.find(n => n.id === activeNodeId))) {
+          activeNodeId = nodesList[0].id;
+          localStorage.setItem('realm_active_node_id', activeNodeId);
+        }
+
+        renderLayout();
       } catch (err) {
-        console.error('加载数据失败', err);
+        console.error('获取数据失败', err);
       }
     }
 
-    function renderDashboard() {
-      // 统计更新
-      document.getElementById('statNodes').textContent = nodesList.length;
+    function renderLayout() {
+      // 全局统计
       const onlineCount = nodesList.filter(n => n.online).length;
-      document.getElementById('statOnlineNodes').textContent = onlineCount;
-      document.getElementById('statRules').textContent = rulesList.filter(r => r.enabled).length;
+      document.getElementById('statOnline').textContent = onlineCount;
+      document.getElementById('statTotal').textContent = nodesList.length;
 
-      // 渲染节点表格
-      const tbodyNodes = document.getElementById('nodesTableBody');
+      // 渲染左侧 Agent 列表
+      const listContainer = document.getElementById('agentListContainer');
       if (nodesList.length === 0) {
-        tbodyNodes.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">暂无受控节点，请点击上方“添加节点”</td></tr>';
+        listContainer.innerHTML = `
+          <div class="text-center text-secondary py-5">
+            <i class="bi bi-inbox fs-2 mb-2 d-block opacity-50"></i>
+            <div class="small">暂无 Agent 节点</div>
+            <button class="btn btn-outline-primary btn-sm mt-3" onclick="openAddNodeModal()">点击添加首个节点</button>
+          </div>
+        `;
       } else {
-        tbodyNodes.innerHTML = nodesList.map(n => `
-          <tr>
-            <td class="fw-bold">${n.name}</td>
-            <td>
-              <span class="badge ${n.online ? 'badge-online' : 'badge-offline'}">
-                ${n.online ? '● 在线' : '○ 离线'}
-              </span>
-            </td>
-            <td><small class="text-secondary">${n.ip || '未知'} (${n.os}/${n.arch})</small></td>
-            <td>
-              <small>CPU: ${n.cpu_usage ? n.cpu_usage.toFixed(1) : 0}% | 内存: ${n.mem_usage ? n.mem_usage.toFixed(1) : 0}%</small>
-            </td>
-            <td><small class="text-secondary">${n.last_seen ? new Date(n.last_seen).toLocaleTimeString() : '从未连接'}</small></td>
-            <td>
-              <button class="btn btn-outline-danger btn-sm" onclick="deleteNode('${n.id}')"><i class="bi bi-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
+        listContainer.innerHTML = nodesList.map(n => {
+          const isActive = n.id === activeNodeId;
+          return `
+            <div class="agent-item ${isActive ? 'active' : ''}" onclick="selectAgent('${n.id}')">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-hdd-fill ${n.online ? 'text-success' : 'text-secondary'}"></i>
+                  <span class="fw-bold">${escapeHtml(n.name)}</span>
+                </div>
+                <div>
+                  <button class="btn btn-link text-danger p-0 ms-2" onclick="event.stopPropagation(); deleteAgent('${n.id}')" title="删除节点">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+                <div class="d-flex align-items-center gap-1">
+                  <span class="status-dot ${n.online ? 'online' : 'offline'}"></span>
+                  <span class="${n.online ? 'text-success' : 'text-secondary'}">${n.online ? '在线' : '离线'}</span>
+                </div>
+                <div>${n.ip ? n.ip : '未连接'}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
 
-      // 渲染规则表格
-      const tbodyRules = document.getElementById('rulesTableBody');
-      if (rulesList.length === 0) {
-        tbodyRules.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">暂无转发规则</td></tr>';
+      // 渲染右侧内容区
+      renderRightPanel();
+    }
+
+    function selectAgent(nodeId) {
+      activeNodeId = nodeId;
+      localStorage.setItem('realm_active_node_id', activeNodeId);
+      renderLayout();
+    }
+
+    function renderRightPanel() {
+      const rightView = document.getElementById('activeAgentView');
+      const emptyView = document.getElementById('noAgentSelectedView');
+
+      if (!activeNodeId || nodesList.length === 0) {
+        emptyView.classList.remove('d-none');
+        rightView.classList.add('d-none');
+        return;
+      }
+
+      const node = nodesList.find(n => n.id === activeNodeId);
+      if (!node) {
+        emptyView.classList.remove('d-none');
+        rightView.classList.add('d-none');
+        return;
+      }
+
+      emptyView.classList.add('d-none');
+      rightView.classList.remove('d-none');
+
+      const offlineView = document.getElementById('agentOfflineView');
+      const onlineView = document.getElementById('agentOnlineView');
+
+      if (!node.online) {
+        // 离线视图
+        offlineView.classList.remove('d-none');
+        onlineView.classList.add('d-none');
+
+        document.getElementById('offlineAgentName').textContent = node.name;
+
+        const host = window.location.host;
+        const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const httpProto = window.location.protocol;
+        const cmd = `bash <(curl -fsSL ${httpProto}//${host}/install/agent.sh) \\\n  server="${proto}//${host}/ws/agent" \\\n  secret="${node.secret}" \\\n  id="${node.id}"`;
+        document.getElementById('agentConnectCmd').textContent = cmd;
       } else {
-        tbodyRules.innerHTML = rulesList.map(r => {
-          const node = nodesList.find(n => n.id === r.node_id);
-          const nodeName = node ? node.name : '未知节点';
-          return `
+        // 在线视图
+        offlineView.classList.add('d-none');
+        onlineView.classList.remove('d-none');
+
+        document.getElementById('onlineAgentName').textContent = node.name;
+        document.getElementById('agentIP').textContent = node.ip || '未知';
+        document.getElementById('agentOS').textContent = `${node.os || 'Linux'}/${node.arch || 'amd64'}`;
+        document.getElementById('agentCPU').textContent = `${node.cpu_usage ? node.cpu_usage.toFixed(1) : 0}%`;
+        document.getElementById('agentMem').textContent = `${node.mem_usage ? node.mem_usage.toFixed(1) : 0}%`;
+
+        // 过滤属于当前节点的规则
+        const nodeRules = rulesList.filter(r => r.node_id === node.id);
+        const tbody = document.getElementById('agentRulesTableBody');
+
+        if (nodeRules.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">当前节点暂无转发规则，请点击右上角【添加转发规则】开始</td></tr>';
+        } else {
+          tbody.innerHTML = nodeRules.map(r => `
             <tr>
-              <td class="fw-semibold">${r.name}</td>
-              <td><span class="badge bg-dark border border-secondary">${nodeName}</span></td>
+              <td class="fw-semibold">${escapeHtml(r.name)}</td>
               <td>
                 <span class="badge ${r.mode === 'realm' ? 'badge-realm' : 'badge-kernel'}">
-                  ${r.mode === 'realm' ? 'Realm 模式' : '内核模式 (端口段)'}
+                  ${r.mode === 'realm' ? '⚡ Realm 单端口' : '🔥 内核端口段'}
                 </span>
               </td>
               <td><span class="badge bg-secondary text-uppercase">${r.protocol}</span></td>
-              <td><code>${r.listen_port}</code></td>
-              <td><code>${r.remote_addr}</code></td>
+              <td><code class="text-info">${escapeHtml(r.listen_port)}</code></td>
+              <td><code class="text-warning">${escapeHtml(r.remote_addr)}</code></td>
               <td>
                 <span class="badge ${r.enabled ? 'bg-success' : 'bg-secondary'}">
                   ${r.enabled ? '运行中' : '已停用'}
                 </span>
               </td>
-              <td>
-                <button class="btn btn-sm ${r.enabled ? 'btn-outline-warning' : 'btn-outline-success'} me-1" onclick="toggleRule('${r.id}')">
+              <td class="text-end">
+                <button class="btn btn-sm ${r.enabled ? 'btn-outline-warning' : 'btn-outline-success'} py-0 px-2 me-1" onclick="toggleRule('${r.id}')" title="${r.enabled ? '停用' : '启用'}">
                   <i class="bi ${r.enabled ? 'bi-pause-fill' : 'bi-play-fill'}"></i>
                 </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="deleteRule('${r.id}')">
+                <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteRule('${r.id}')" title="删除规则">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
             </tr>
-          `;
-        }).join('');
+          `).join('');
+        }
       }
     }
 
-    // 添加节点逻辑
+    function copyConnectCmd() {
+      const text = document.getElementById('agentConnectCmd').textContent;
+      navigator.clipboard.writeText(text).then(() => alert('连接命令已成功复制到剪贴板！'));
+    }
+
+    // 添加节点
     let addNodeModalInstance;
     function openAddNodeModal() {
       document.getElementById('newNodeName').value = '';
-      document.getElementById('addNodeFormView').classList.remove('d-none');
-      document.getElementById('addNodeResultView').classList.add('d-none');
       addNodeModalInstance = new bootstrap.Modal(document.getElementById('addNodeModal'));
       addNodeModalInstance.show();
     }
@@ -520,34 +604,32 @@
       });
       const data = await res.json();
       if (data.id) {
-        const host = window.location.host;
-        const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const installCmd = `curl -fsSL http://${host}/install/agent.sh | bash -s -- server="${proto}//${host}/ws/agent" secret="${data.secret}" id="${data.id}"`;
-        document.getElementById('installCmdText').textContent = installCmd;
-        document.getElementById('addNodeFormView').classList.add('d-none');
-        document.getElementById('addNodeResultView').classList.remove('d-none');
+        addNodeModalInstance.hide();
+        activeNodeId = data.id;
+        localStorage.setItem('realm_active_node_id', activeNodeId);
         loadData();
+      } else {
+        alert(data.error || '创建节点失败');
       }
     }
 
-    function copyInstallCmd() {
-      const text = document.getElementById('installCmdText').textContent;
-      navigator.clipboard.writeText(text).then(() => alert('安装命令已复制到剪贴板！'));
-    }
-
-    async function deleteNode(id) {
-      if (!confirm('确认删除该节点吗？关联的转发规则也将被同时移除。')) return;
-      await fetch(`/api/nodes/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+    async function deleteAgent(nodeId) {
+      if (!confirm('确认删除该 Agent 节点吗？其所有的转发规则也将一并被移除。')) return;
+      await fetch(`/api/nodes/${nodeId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (activeNodeId === nodeId) {
+        activeNodeId = '';
+        localStorage.removeItem('realm_active_node_id');
+      }
       loadData();
     }
 
-    // 规则管理逻辑
+    // 添加规则
     let ruleModalInstance;
     function openAddRuleModal() {
-      if (nodesList.length === 0) return alert('请先添加至少一个受控节点！');
-      
-      const select = document.getElementById('ruleNodeId');
-      select.innerHTML = nodesList.map(n => `<option value="${n.id}">${n.name} (${n.online ? '在线' : '离线'})</option>`).join('');
+      if (!activeNodeId) return alert('请先选择一个 Agent 节点！');
 
       document.getElementById('ruleId').value = '';
       document.getElementById('ruleName').value = '';
@@ -563,11 +645,11 @@
     function handleModeChange() {
       const mode = document.getElementById('ruleMode').value;
       if (mode === 'kernel') {
-        document.getElementById('listenHelp').textContent = '端口段格式: 20000-50000 (将使用 iptables/nftables 直接处理)';
-        document.getElementById('remoteHelp').textContent = '目标端地址: 1.2.3.4:20000-50000';
+        document.getElementById('listenHelp').textContent = '端口段示例: 20000-50000 (将由 Agent 调用 Linux 内核一键映射)';
+        document.getElementById('remoteHelp').textContent = '后端目标地址: 1.2.3.4:20000-50000';
       } else {
-        document.getElementById('listenHelp').textContent = '单端口或地址: 8080 或 0.0.0.0:8080';
-        document.getElementById('remoteHelp').textContent = '目标端地址: 1.2.3.4:8080';
+        document.getElementById('listenHelp').textContent = '单端口示例: 8080 或 0.0.0.0:8080';
+        document.getElementById('remoteHelp').textContent = '后端目标地址: 1.2.3.4:8080';
       }
     }
 
@@ -575,7 +657,7 @@
       e.preventDefault();
       const payload = {
         name: document.getElementById('ruleName').value.trim(),
-        node_id: document.getElementById('ruleNodeId').value,
+        node_id: activeNodeId,
         mode: document.getElementById('ruleMode').value,
         protocol: document.getElementById('ruleProtocol').value,
         listen_port: document.getElementById('ruleListenPort').value.trim(),
@@ -597,23 +679,34 @@
       }
     }
 
-    async function toggleRule(id) {
-      await fetch(`/api/rules/${id}/toggle`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+    async function toggleRule(ruleId) {
+      await fetch(`/api/rules/${ruleId}/toggle`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
       loadData();
     }
 
-    async function deleteRule(id) {
-      if (!confirm('确认删除该转发规则？')) return;
-      await fetch(`/api/rules/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+    async function deleteRule(ruleId) {
+      if (!confirm('确认删除此条转发规则？')) return;
+      await fetch(`/api/rules/${ruleId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
       loadData();
     }
 
-    // 自动轮询刷新状态
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 自动轮询刷新
     setInterval(() => {
       if (token) loadData();
-    }, 5000);
+    }, 4000);
 
-    // 初始启动
+    // 初始化
     checkAuth();
   </script>
 </body>
