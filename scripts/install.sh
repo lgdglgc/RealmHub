@@ -39,18 +39,27 @@ install_server() {
     check_root
     install_deps
 
+    # 停止旧服务，防止覆盖可执行文件时出现 Text file busy 错误
+    if systemctl is-active --quiet realm-server 2>/dev/null; then
+        echo -e "${YELLOW}检测到正在运行的 realm-server 服务，正在停止以进行平滑更新...${NC}"
+        systemctl stop realm-server 2>/dev/null || true
+    fi
+    pkill -f "$INSTALL_DIR/realm-server" 2>/dev/null || true
+
     mkdir -p "$INSTALL_DIR/data"
     echo -e "${BLUE}[2/4] 获取 RealmHub Server 核心文件...${NC}"
 
+    TMP_BIN="/tmp/realm-server-tmp-$$"
     if [ -f "./realm-server" ]; then
-        cp ./realm-server "$INSTALL_DIR/realm-server"
+        cp -f ./realm-server "$TMP_BIN"
     else
         echo -e "${BLUE}正在从 GitHub 下载 realm-server...${NC}"
-        wget -q --show-progress -O "$INSTALL_DIR/realm-server" "$REPO_RAW/realm-server" || {
-            curl -fsSL -o "$INSTALL_DIR/realm-server" "$REPO_RAW/realm-server"
+        wget -q --show-progress -O "$TMP_BIN" "$REPO_RAW/realm-server" || {
+            curl -fsSL -o "$TMP_BIN" "$REPO_RAW/realm-server"
         }
     fi
-    chmod +x "$INSTALL_DIR/realm-server"
+    chmod +x "$TMP_BIN"
+    mv -f "$TMP_BIN" "$INSTALL_DIR/realm-server"
 
     # 端口参数
     if [ -z "$WEB_PORT" ]; then
@@ -102,18 +111,28 @@ install_agent() {
     check_root
     install_deps
 
+    # 停止旧服务，防止覆盖可执行文件时出现 Text file busy 错误
+    if systemctl is-active --quiet realm-agent 2>/dev/null; then
+        echo -e "${YELLOW}检测到正在运行的 realm-agent 服务，正在停止以进行平滑更新...${NC}"
+        systemctl stop realm-agent 2>/dev/null || true
+    fi
+    pkill -f "$INSTALL_DIR/realm-agent" 2>/dev/null || true
+    pkill -f "$INSTALL_DIR/realm" 2>/dev/null || true
+
     mkdir -p "$INSTALL_DIR"
     echo -e "${BLUE}[2/4] 获取 RealmHub Agent 核心程序...${NC}"
 
+    TMP_BIN="/tmp/realm-agent-tmp-$$"
     if [ -f "./realm-agent" ]; then
-        cp ./realm-agent "$INSTALL_DIR/realm-agent"
+        cp -f ./realm-agent "$TMP_BIN"
     else
         echo -e "${BLUE}正在从 GitHub 下载 realm-agent...${NC}"
-        wget -q --show-progress -O "$INSTALL_DIR/realm-agent" "$REPO_RAW/realm-agent" || {
-            curl -fsSL -o "$INSTALL_DIR/realm-agent" "$REPO_RAW/realm-agent"
+        wget -q --show-progress -O "$TMP_BIN" "$REPO_RAW/realm-agent" || {
+            curl -fsSL -o "$TMP_BIN" "$REPO_RAW/realm-agent"
         }
     fi
-    chmod +x "$INSTALL_DIR/realm-agent"
+    chmod +x "$TMP_BIN"
+    mv -f "$TMP_BIN" "$INSTALL_DIR/realm-agent"
 
     # 参数检查（支持命令行传入 server=... secret=... id=...）
     if [ -z "$SERVER_ADDR" ]; then
