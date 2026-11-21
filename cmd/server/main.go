@@ -490,9 +490,6 @@ echo "========================================="
 		_, _ = w.Write([]byte(script))
 	}
 }
-		_, _ = w.Write([]byte(script))
-	}
-}
 
 // 辅助方法
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
