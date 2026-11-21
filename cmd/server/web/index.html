@@ -199,7 +199,7 @@
                 <div class="code-box mb-3" id="agentConnectCmd">...</div>
                 <div class="d-flex justify-content-between align-items-center">
                   <small class="text-secondary">注意：此命令包含节点密钥，直接在目标服务器粘贴运行即可。</small>
-                  <button class="btn btn-primary btn-sm px-3" onclick="copyConnectCmd()">
+                  <button class="btn btn-primary btn-sm px-3" onclick="copyConnectCmd(this)">
                     <i class="bi bi-clipboard me-1"></i> 复制连接命令
                   </button>
                 </div>
@@ -580,9 +580,52 @@
       }
     }
 
-    function copyConnectCmd() {
+    function copyConnectCmd(btn) {
       const text = document.getElementById('agentConnectCmd').textContent;
-      navigator.clipboard.writeText(text).then(() => alert('连接命令已成功复制到剪贴板！'));
+      copyTextToClipboard(text, btn);
+    }
+
+    function copyTextToClipboard(text, btn) {
+      const onSuccess = () => {
+        if (btn) {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="bi bi-check2 me-1"></i> 已复制！';
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-success');
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+          }, 2000);
+        } else {
+          alert('连接命令已成功复制到剪贴板！');
+        }
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(onSuccess).catch(() => fallbackCopy(text, onSuccess));
+      } else {
+        fallbackCopy(text, onSuccess);
+      }
+    }
+
+    function fallbackCopy(text, onSuccess) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful && onSuccess) onSuccess();
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+        alert('复制失败，请手动选中文本复制');
+      }
+      document.body.removeChild(textArea);
     }
 
     // 添加节点
