@@ -1,7 +1,7 @@
 #!/bin/bash
 # =========================================================
 # RealmHub 一键部署管理脚本 (Server 控制面板 / Agent 受控节点)
-# 项目地址: https://github.com/lgdglgc/realm
+# 项目地址: https://github.com/lgdglgc/RealmHub
 # 支持系统: Debian, Ubuntu, CentOS, Rocky Linux, AlmaLinux 等
 # =========================================================
 
@@ -14,7 +14,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 INSTALL_DIR="/etc/realm-hub"
-REPO_RAW="https://raw.githubusercontent.com/lgdglgc/realm/main"
+REPO_RAW="https://raw.githubusercontent.com/lgdglgc/RealmHub/main"
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then

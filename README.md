@@ -32,7 +32,7 @@
 在您的中控服务器（具有公网 IP 的 VPS）终端中执行以下一键安装命令：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/install.sh) server port=3000
+bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/RealmHub/main/scripts/install.sh) server port=3000
 ```
 > **参数说明**：
 > * `port=3000`：Web 控制面板访问端口（默认 3000，可自定义）。
@@ -49,7 +49,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/i
 
 #### 方式 B：手动执行脚本安装
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/install.sh) agent server="ws://控制端IP:3000/ws/agent" secret="你的SECRET" id="你的NODE_ID"
+bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/RealmHub/main/scripts/install.sh) agent server="ws://控制端IP:3000/ws/agent" secret="你的SECRET" id="你的NODE_ID"
 ```
 
 ---
@@ -59,7 +59,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/i
 在任何服务器上直接运行下方命令，即可唤起交互式运维菜单：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/RealmHub/main/scripts/install.sh)
 ```
 
 <details>
@@ -79,10 +79,10 @@ systemctl restart realm-server
 systemctl restart realm-agent
 
 # 卸载 Server
-bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/install.sh) uninstall-server
+bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/RealmHub/main/scripts/install.sh) uninstall-server
 
 # 卸载 Agent
-bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/install.sh) uninstall-agent
+bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/RealmHub/main/scripts/install.sh) uninstall-agent
 ```
 </details>
 
@@ -147,8 +147,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lgdglgc/realm/main/scripts/i
 
 ```bash
 # 克隆仓库
-git clone https://github.com/lgdglgc/realm.git
-cd realm
+git clone https://github.com/lgdglgc/RealmHub.git
+cd RealmHub
 
 # 编译 Linux amd64 生产版本
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o realm-server ./cmd/server
