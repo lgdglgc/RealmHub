@@ -1,0 +1,19 @@
+# 编译二进制产物
+*.exe
+realm-server
+realm-agent
+
+# 运行时数据与测试目录
+data/
+test-data/
+*.db
+*.tmp
+*.log
+
+# IDE 与操作系统配置
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
