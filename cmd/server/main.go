@@ -142,6 +142,23 @@ func main() {
 	// 一键安装脚本路由
 	mux.HandleFunc("/install/agent.sh", handleAgentInstallScript())
 
+	// 提供 realm-agent 静态二进制下载服务
+	mux.HandleFunc("/download/realm-agent", func(w http.ResponseWriter, r *http.Request) {
+		candidates := []string{
+			"/etc/realm-hub/realm-agent",
+			"./realm-agent",
+			"realm-agent",
+		}
+		for _, path := range candidates {
+			if _, err := os.Stat(path); err == nil {
+				w.Header().Set("Content-Disposition", "attachment; filename=realm-agent")
+				http.ServeFile(w, r, path)
+				return
+			}
+		}
+		http.Redirect(w, r, "https://raw.githubusercontent.com/lgdglgc/RealmHub/main/realm-agent", http.StatusFound)
+	})
+
 	// 静态文件服务
 	webFS, _ := fs.Sub(embeddedWeb, "web")
 	fileServer := http.FileServer(http.FS(webFS))
@@ -372,7 +389,13 @@ func handleRuleByID(s *store.Store, hub *Hub) http.HandlerFunc {
 // handleAgentInstallScript 输出通用一键安装脚本
 func handleAgentInstallScript() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		script := `#!/bin/bash
+		host := r.Host
+		proto := "http"
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+			proto = "https"
+		}
+
+		script := fmt.Sprintf(`#!/bin/bash
 set -e
 echo "========================================="
 echo "       RealmHub Agent 一键安装程序       "
@@ -398,35 +421,48 @@ fi
 INSTALL_DIR="/etc/realm-hub"
 mkdir -p "$INSTALL_DIR"
 
-echo "[1/4] 下载 realm-agent..."
-# 若安装包在主控端，可直接拉取
+# 停止旧服务
+systemctl stop realm-agent 2>/dev/null || true
+pkill -f "$INSTALL_DIR/realm-agent" 2>/dev/null || true
+
+echo "[1/4] 安装基础依赖 (iptables, curl, wget, tar)..."
+if command -v apt-get &> /dev/null; then
+  apt-get update -qq && apt-get install -y -qq iptables curl wget tar ca-certificates
+elif command -v yum &> /dev/null; then
+  yum install -y iptables curl wget tar ca-certificates
+elif command -v dnf &> /dev/null; then
+  dnf install -y iptables curl wget tar ca-certificates
+fi
+
+echo "[2/4] 下载 realm-agent 受控守护程序..."
+# 优先从当前主控端直接下载，若失败则从 GitHub 下载
+TMP_AGENT="/tmp/realm-agent-tmp-$$"
+if curl -fsSL -o "$TMP_AGENT" "%s://%s/download/realm-agent" 2>/dev/null; then
+  echo "成功从主控端拉取 realm-agent"
+else
+  echo "从 GitHub 拉取 realm-agent..."
+  curl -fsSL -o "$TMP_AGENT" "https://raw.githubusercontent.com/lgdglgc/RealmHub/main/realm-agent"
+fi
+chmod +x "$TMP_AGENT"
+mv -f "$TMP_AGENT" "$INSTALL_DIR/realm-agent"
+
+echo "[3/4] 检查官方 Realm 转发内核..."
 ARCH=$(uname -m)
 case $ARCH in
-  x86_64) AGENT_URL="https://github.com/zhboner/realm/releases/latest/download/realm-x86_64-unknown-linux-musl.tar.gz" ;;
-  aarch64|arm64) AGENT_URL="https://github.com/zhboner/realm/releases/latest/download/realm-aarch64-unknown-linux-musl.tar.gz" ;;
+  x86_64) REALM_URL="https://github.com/zhboner/realm/releases/latest/download/realm-x86_64-unknown-linux-musl.tar.gz" ;;
+  aarch64|arm64) REALM_URL="https://github.com/zhboner/realm/releases/latest/download/realm-aarch64-unknown-linux-musl.tar.gz" ;;
 esac
 
-# 检查 iptables 依赖
-if ! command -v iptables &> /dev/null; then
-  echo "[2/4] 安装 iptables 依赖..."
-  if command -v apt-get &> /dev/null; then
-    apt-get update -qq && apt-get install -y -qq iptables curl wget
-  elif command -v yum &> /dev/null; then
-    yum install -y iptables curl wget
-  fi
+if [ ! -f "$INSTALL_DIR/realm" ] && [ -n "$REALM_URL" ]; then
+  wget -qO /tmp/realm.tar.gz "$REALM_URL" && tar -xzf /tmp/realm.tar.gz -C "$INSTALL_DIR/" && chmod +x "$INSTALL_DIR/realm" || true
 fi
 
-# 下载官方 realm 内核（如果本地没有）
-if [ ! -f "$INSTALL_DIR/realm" ]; then
-  echo "[3/4] 下载官方 Realm 内核..."
-  wget -qO /tmp/realm.tar.gz "$AGENT_URL" && tar -xzf /tmp/realm.tar.gz -C "$INSTALL_DIR/" && chmod +x "$INSTALL_DIR/realm" || true
-fi
-
-echo "[4/4] 注册 systemd 守护进程服务..."
+echo "[4/4] 注册并启动 systemd 守护进程..."
 cat > /etc/systemd/system/realm-agent.service << EOF
 [Unit]
 Description=RealmHub Agent Service
-After=network.target
+After=network.target network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
@@ -436,6 +472,7 @@ ExecStart=$INSTALL_DIR/realm-agent --server "$SERVER" --secret "$SECRET" --id "$
 Restart=always
 RestartSec=3s
 LimitNOFILE=1048576
+LimitNPROC=1048576
 
 [Install]
 WantedBy=multi-user.target
@@ -445,9 +482,14 @@ systemctl daemon-reload
 systemctl enable realm-agent
 systemctl restart realm-agent
 
-echo "✅ RealmHub Agent 已成功启动并在后台运行！"
-`
+echo "========================================="
+echo "✅ RealmHub Agent 已成功启动并接入管理端！"
+echo "========================================="
+`, proto, host)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write([]byte(script))
+	}
+}
 		_, _ = w.Write([]byte(script))
 	}
 }
