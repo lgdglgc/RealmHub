@@ -1,7 +1,5 @@
-# 编译二进制产物
+# 编译可执行程序 (.exe 与 Windows 本地文件)
 *.exe
-realm-server
-realm-agent
 
 # 运行时数据与测试目录
 data/
@@ -16,4 +14,3 @@ test-data/
 *.swp
 .DS_Store
 Thumbs.db
-
